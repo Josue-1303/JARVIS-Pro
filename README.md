@@ -46,7 +46,7 @@ Los proyectos de prueba separados contienen comprobaciones unitarias. Las prueba
 
 Este repositorio es privado: el enlace solo funciona para ti y las personas a quienes concedas acceso desde GitHub.
 
-No se incluyen conversaciones, recuerdos, copias de seguridad, registros, voces descargadas, modelos de lenguaje/Whisper, entornos virtuales ni credenciales. El audio en `*/fixtures/` es material sintético de prueba.
+No se incluyen conversaciones, recuerdos, copias de seguridad, registros, voces descargadas, modelos de lenguaje/Whisper, entornos virtuales ni credenciales. No se publican archivos de audio; las muestras usadas durante las pruebas son sintéticas.
 
 
 
