@@ -42,11 +42,6 @@ dotnet build Jarvis.Core/Jarvis.Core.csproj -c Release
 
 Los proyectos de prueba separados contienen comprobaciones unitarias y muestras de audio sintético. La validación de voz local en tiempo real necesita Ollama, Piper, modelos locales y dispositivos configurados; consulta `Validate-Jarvis.ps1` para las comprobaciones de desarrollo.
 
-## Privacidad del repositorio
+## Privacidad
 
-Este repositorio es privado: el enlace solo funciona para ti y las personas a quienes concedas acceso desde GitHub.
-
-No se incluyen conversaciones, recuerdos, copias de seguridad, registros, voces descargadas, modelos de lenguaje/Whisper, entornos virtuales ni credenciales. El audio en `*/fixtures/` es material sintético de prueba.
-
-
-
+El repositorio es privado: el enlace solo funciona para ti y las personas a quienes concedas acceso desde GitHub. No se incluyen conversaciones, recuerdos, copias de seguridad, registros, voces descargadas, modelos de lenguaje/Whisper, entornos virtuales ni credenciales. El audio de `*/fixtures/` es sintético.
