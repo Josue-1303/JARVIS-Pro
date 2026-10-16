@@ -40,8 +40,13 @@ Los datos y modelos son locales. Las conversaciones se almacenan en `data/`, que
 dotnet build Jarvis.Core/Jarvis.Core.csproj -c Release
 ```
 
-Los proyectos de prueba separados contienen comprobaciones unitarias y muestras de audio sintético. La validación de voz local en tiempo real necesita Ollama, Piper, modelos locales y dispositivos configurados; consulta `Validate-Jarvis.ps1` para las comprobaciones de desarrollo.
+Los proyectos de prueba separados contienen comprobaciones unitarias. Las pruebas de transcripción con Whisper requieren audio sintético de prueba, que no se distribuye aquí. La validación de voz en tiempo real también requiere Ollama, Piper, modelos locales y dispositivos configurados. `Validate-Jarvis.ps1` ejecuta las comprobaciones reproducibles que no requieren esos recursos.
 
-## Privacidad
+## Privacidad del repositorio
 
-El repositorio es privado: el enlace solo funciona para ti y las personas a quienes concedas acceso desde GitHub. No se incluyen conversaciones, recuerdos, copias de seguridad, registros, voces descargadas, modelos de lenguaje/Whisper, entornos virtuales ni credenciales. El audio de `*/fixtures/` es sintético.
+Este repositorio es privado: el enlace solo funciona para ti y las personas a quienes concedas acceso desde GitHub.
+
+No se incluyen conversaciones, recuerdos, copias de seguridad, registros, voces descargadas, modelos de lenguaje/Whisper, entornos virtuales ni credenciales. El audio en `*/fixtures/` es material sintético de prueba.
+
+
+

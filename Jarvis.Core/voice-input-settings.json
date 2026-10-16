@@ -1,0 +1,12 @@
+{
+  "WakeEnabled": true,
+  "SpeechThreshold": 0.006,
+  "ContinuousConversation": true,
+  "FollowUpWaitSeconds": 12,
+  "WhisperModel": "small",
+  "SilenceMilliseconds": 1000,
+  "MinimumSpeechMilliseconds": 200,
+  "MaximumPhraseSeconds": 20,
+  "CommandWaitSeconds": 12,
+  "MicrophoneDevice": 0
+}

@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+.venv-piper/
+data/
+models/
+voices/
+backups/
+validation/
+.env
+.env.*
+*.user
+*.suo
+*.log
+*.wav
