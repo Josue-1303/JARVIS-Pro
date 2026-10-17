@@ -165,7 +165,7 @@ User microphone report, 16 October 2026: «Jarvis» activation and English/Spani
 - [x] Search only the current question, treat results as untrusted evidence, cite returned sources, and display source links in chat.
 - [x] Store the Ollama Web Search API key encrypted with Windows DPAPI; keep it and local user data out of version control.
 - [x] Keep the news panel limited to the main chat page.
-- [x] Pass the desktop Release build and all 83 isolated regression checks; live Qwen routing also passed for one current fact with Internet Access off and one stable arithmetic question.
+- [x] Pass the desktop Release build and all 84 isolated regression checks; live Qwen routing also passed for one current fact with Internet Access off and one stable arithmetic question.
 - [ ] Add a simple Connections settings area showing available providers and account status; live access follows in V1.1.
 - [ ] Validate the location permission flow, rendered layout and complete interface language switch in the user's interactive desktop session.
 - [ ] Verify Internet Access on/off behavior and a real cited search with the user's configured key in the desktop session.

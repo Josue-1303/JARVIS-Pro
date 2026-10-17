@@ -139,6 +139,17 @@ using (var searchClient = new HttpClient(searchModel))
     JarvisReply disabledReply = await disabledAI.AskReplyAsync("Which coalition parties govern Finland?");
     Check((disabledReply.Text.Contains("currently off", StringComparison.Ordinal) || disabledReply.Text.Contains("desactivado", StringComparison.Ordinal)) && searchCallsBeforeDisabled == 0 &&
         searchModel.CallCount == modelCallsBeforeDisabled + 1, "With Internet Access off, the model identifies the need but the app blocks search and avoids guessing");
+
+    int unconfiguredSearchCalls = 0;
+    searchModel.NextRequiresWebSearch = true;
+    var unconfiguredAI = new JarvisAI(searchClient,
+        webSearch: (_, _) => { unconfiguredSearchCalls++; return Task.FromResult<IReadOnlyList<WebSearchResult>>([]); },
+        webSearchAvailable: () => false,
+        internetAccessEnabled: () => true);
+    JarvisReply unconfiguredReply = await unconfiguredAI.AskReplyAsync("Which coalition parties govern Finland?");
+    Check((unconfiguredReply.Text.Contains("not configured", StringComparison.OrdinalIgnoreCase) ||
+           unconfiguredReply.Text.Contains("no está configurada", StringComparison.OrdinalIgnoreCase)) && unconfiguredSearchCalls == 0,
+        "Internet Access on with no search key explains setup without making a provider call");
 }
 Guid conversationId;
 Guid memoryId;
