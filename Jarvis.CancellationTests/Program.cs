@@ -149,6 +149,16 @@ static class Tests
             Check(playbackTimer.Elapsed < TimeSpan.FromSeconds(3), $"Escape stops playback promptly [{language}]");
         }
         Check(store.Load(session.Current.Id).Turns.Count == 1, "Interrupting voice preserves completed reply");
+        var speechStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        bool spokenStop = await SpokenInterruption.RunAsync(ct => speech.SpeakAsync(
+            string.Join(" ", Enumerable.Repeat("Esta respuesta larga permite probar que Jarvis se detenga al recibir una orden hablada durante la reproducción.", 5)),
+            "es", ct, stage => { if (stage == SpeechStage.Speaking) speechStarted.TrySetResult(); }),
+            async ct =>
+            {
+                await speechStarted.Task.WaitAsync(ct);
+                return "Jarvis, detente";
+            });
+        Check(spokenStop, "Wake-prefixed voice command cancels real Piper playback");
         await speech.SpeakAsync("Listo.", "es");
         await speech.SpeakAsync("Ready.", "en");
         Check(true, "Both voices work normally after interruption");

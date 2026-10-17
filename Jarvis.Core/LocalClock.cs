@@ -58,7 +58,7 @@ public static class LocalClock
         // Full matches prevent current-clock answers to historical dates, other cities, or unrelated tasks.
         if (Regex.IsMatch(q, @"^(?:que dia (?:es|era|fue|sera|estamos)(?: (?:hoy|ayer|manana))?|en que dia estamos|que fecha es(?: hoy)?|cual es la fecha(?: de hoy)?|que dia de la semana (?:es|era|fue|sera)(?: (?:hoy|ayer|manana))?)$")) { kind = "date"; language = "es"; }
         if (Regex.IsMatch(q, @"^(?:what day (?:of the week )?(?:is|was|will) (?:it|today|yesterday|tomorrow)(?: be| today)?|what s (?:the date|today s date|the day today)|what is (?:the date|today s date|the current date))$")) { kind = "date"; language = "en"; }
-        if (Regex.IsMatch(q, @"^(?:que hora es(?: ahora)?|cual es la hora(?: actual)?)$")) { kind = "time"; language = "es"; }
+        if (Regex.IsMatch(q, @"^(?:que hora es(?: ahora)?|cual es la hora(?: actual)?|la hora(?: actual)?)$")) { kind = "time"; language = "es"; }
         if (Regex.IsMatch(q, @"^(?:what time (?:is it|it is)|what s the time|what is the (?:current )?time)$")) { kind = "time"; language = "en"; }
         if (kind != null) return new(kind, requested ?? language!, offset);
         string original = ReplyLanguage.Normalize(question);
@@ -76,7 +76,11 @@ public static class LocalClock
         var date = now.AddDays(intent.DayOffset);
         string text;
         if (intent.Kind == "time")
-            text = language == "en" ? $"It is {now:HH:mm}, according to the computer's local clock." : $"Son las {now:HH:mm}, según el reloj local del equipo.";
+            text = language == "en"
+                ? $"It is {now:HH:mm}, according to the computer's local clock."
+                : now.Hour == 1
+                    ? $"Es la {now:HH:mm}, según el reloj local del equipo."
+                    : $"Son las {now:HH:mm}, según el reloj local del equipo.";
         else if (language == "en")
             text = $"{(intent.DayOffset == -1 ? "Yesterday was" : intent.DayOffset == 1 ? "Tomorrow is" : "Today is")} {date.ToString("dddd, MMMM d, yyyy", culture)}, according to the computer's local clock.";
         else

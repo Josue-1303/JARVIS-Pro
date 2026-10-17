@@ -28,7 +28,8 @@ public static class IdleVoiceInput
                     try { await listening; } catch (OperationCanceledException) { }
                     return new IdleInput(selected ?? ConsoleKey.V, null);
                 }
-                return new IdleInput(null, await listening);
+                string text = await listening;
+                return new IdleInput(null, string.IsNullOrWhiteSpace(text) ? null : text);
             }
             finally
             {

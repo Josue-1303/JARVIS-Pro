@@ -1,6 +1,6 @@
 {
   "WakeEnabled": true,
-  "SpeechThreshold": 0.006,
+  "SpeechThreshold": 0.0054,
   "ContinuousConversation": true,
   "FollowUpWaitSeconds": 12,
   "WhisperModel": "small",

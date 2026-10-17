@@ -5,7 +5,7 @@ namespace Jarvis.Core;
 public sealed class VoiceInputSettings
 {
     public bool WakeEnabled { get; set; } = true;
-    public double SpeechThreshold { get; set; } = 0.006;
+    public double SpeechThreshold { get; set; } = 0.0054;
     public bool ContinuousConversation { get; set; } = true;
     public int FollowUpWaitSeconds { get; set; } = 12;
     public string WhisperModel { get; set; } = "small";

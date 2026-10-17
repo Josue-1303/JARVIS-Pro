@@ -28,7 +28,7 @@ public sealed class PiperSpeechService
     }
 
     public async Task SpeakAsync(string text, string language = "es", CancellationToken cancellationToken = default,
-        Action<SpeechStage>? progress = null)
+        Action<SpeechStage>? progress = null, Action<TimeSpan, TimeSpan>? playbackProgress = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (string.IsNullOrWhiteSpace(text)) return;
@@ -107,7 +107,22 @@ public sealed class PiperSpeechService
                 cancellationToken.ThrowIfCancellationRequested();
                 player.Play();
                 progress?.Invoke(SpeechStage.Speaking);
-                await completed.Task.WaitAsync(reader.TotalTime + TimeSpan.FromSeconds(15), cancellationToken);
+                var playbackTimeout = Task.Delay(reader.TotalTime + TimeSpan.FromSeconds(15), cancellationToken);
+                while (!completed.Task.IsCompleted)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    playbackProgress?.Invoke(reader.CurrentTime, reader.TotalTime);
+                    var tick = Task.Delay(TimeSpan.FromMilliseconds(33), cancellationToken);
+                    var finished = await Task.WhenAny(completed.Task, tick, playbackTimeout);
+                    if (finished == playbackTimeout)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        throw new TimeoutException("La reproducción de Piper superó el tiempo esperado.");
+                    }
+                    if (finished == tick) await tick;
+                }
+                await completed.Task;
+                playbackProgress?.Invoke(reader.TotalTime, reader.TotalTime);
                 cancellationToken.ThrowIfCancellationRequested();
             }
             finally { player.Stop(); }

@@ -1,6 +1,0 @@
-{
-  "PythonPath": ".venv-piper/Scripts/python.exe",
-  "SpanishModel": "voices/es_MX-claude-high.onnx",
-  "EnglishModel": "voices/en_GB-alan-medium.onnx",
-  "SynthesisTimeoutSeconds": 120
-}

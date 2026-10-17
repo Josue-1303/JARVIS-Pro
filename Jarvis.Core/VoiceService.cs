@@ -11,6 +11,7 @@ public sealed class VoiceService : IDisposable
     private readonly SemaphoreSlim transcriptionGate = new(1, 1);
     private WhisperFactory? factory;
     public VoiceInputSettings Settings { get; }
+    public float? LastTranscriptionConfidence { get; private set; }
 
     public VoiceService(VoiceInputSettings? settings = null)
     {
@@ -58,12 +59,12 @@ public sealed class VoiceService : IDisposable
         {
             await EnsureModelAsync(cancellationToken);
             // Native initialization and inference stay off the console input loop.
-            return await Task.Run(async () =>
+            var result = await Task.Run(async () =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 factory ??= WhisperFactory.FromPath(modelPath);
                 cancellationToken.ThrowIfCancellationRequested();
-                var builder = factory.CreateBuilder().WithLanguage("es").WithNoContext()
+                var builder = factory.CreateBuilder().WithLanguage("es").WithNoContext().WithProbabilities()
                     .WithTemperature(0).WithBeamSearchSamplingStrategy(strategy => strategy.WithBeamSize(5));
                 builder.WithPrompt("Jarvis. Conversación: saludo, fecha, día, hora, hoy, mañana, tareas, universidad, trabajo. Conversation: greeting, date, day, time, today, tomorrow, tasks, university, work.");
                 await using var processor = builder.Build();
@@ -94,10 +95,18 @@ public sealed class VoiceService : IDisposable
                 }
                 processor.ChangeLanguage(language);
                 var text = new StringBuilder();
-                await foreach (var segment in processor.ProcessAsync(stream, cancellationToken)) text.Append(segment.Text);
+                var probabilities = new List<float>();
+                await foreach (var segment in processor.ProcessAsync(stream, cancellationToken))
+                {
+                    text.Append(segment.Text);
+                    probabilities.Add(segment.Probability);
+                }
                 cancellationToken.ThrowIfCancellationRequested();
-                return text.ToString().Trim();
+                float confidence = probabilities.Count == 0 ? 0 : probabilities.Min();
+                return (Text: text.ToString().Trim(), Confidence: confidence);
             }, cancellationToken);
+            LastTranscriptionConfidence = result.Confidence;
+            return result.Text;
         }
         finally { transcriptionGate.Release(); }
     }
@@ -121,8 +130,29 @@ public sealed class VoiceService : IDisposable
         }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
+    public async Task<string> ListenForInterruptionAsync(CancellationToken cancellationToken)
+    {
+        var commandSettings = new VoiceInputSettings
+        {
+            WakeEnabled = false,
+            SpeechThreshold = Settings.SpeechThreshold,
+            ContinuousConversation = false,
+            FollowUpWaitSeconds = Settings.FollowUpWaitSeconds,
+            WhisperModel = Settings.WhisperModel,
+            RecognitionLanguage = Settings.RecognitionLanguage,
+            SilenceMilliseconds = Math.Min(Settings.SilenceMilliseconds, 600),
+            MinimumSpeechMilliseconds = Settings.MinimumSpeechMilliseconds,
+            MaximumPhraseSeconds = Math.Min(Settings.MaximumPhraseSeconds, 5),
+            CommandWaitSeconds = Settings.CommandWaitSeconds,
+            MicrophoneDevice = Settings.MicrophoneDevice
+        };
+        var wave = await MicrophoneCapture.CaptureAsync(commandSettings, true, cancellationToken);
+        if (wave == null) return "";
+        return await TranscribeAsync(wave, cancellationToken);
+    }
     public Task SpeakAsync(string text, string language = "es", CancellationToken cancellationToken = default,
-        Action<SpeechStage>? progress = null) => speech.SpeakAsync(text, language, cancellationToken, progress);
+        Action<SpeechStage>? progress = null, Action<TimeSpan, TimeSpan>? playbackProgress = null) =>
+        speech.SpeakAsync(text, language, cancellationToken, progress, playbackProgress);
 
     public void Dispose() { factory?.Dispose(); transcriptionGate.Dispose(); }
 }

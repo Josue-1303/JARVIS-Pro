@@ -45,6 +45,8 @@ static class ContinuousTests
             return "";
         }, TimeSpan.FromMilliseconds(50), CancellationToken.None);
         Check(text == "", "Idle follow-up deadline returns no message");
+        var timedOut = await IdleVoiceInput.WaitAsync(_ => Task.FromResult(""), () => throw new Exception("No key should be read"));
+        Check(timedOut.Key == null && timedOut.Text == null, "Silent follow-up timeout returns to wake mode without a blank input");
 
         var frames = new byte[3200];
         for (int i = 0; i < frames.Length; i += 2) BinaryPrimitives.WriteInt16LittleEndian(frames.AsSpan(i, 2), 220);
@@ -57,6 +59,21 @@ static class ContinuousTests
         {
             vad.Push(frames); vad.Push(frames);
             Check(!vad.HasSpeech, "Comparison confirms sensitivity changed");
+        }
+
+        var briefBurst = new byte[3200];
+        for (int i = 0; i < 160 * 2; i += 2) BinaryPrimitives.WriteInt16LittleEndian(briefBurst.AsSpan(i, 2), 2500);
+        using (var vad = new SpeechSegmenter(new VoiceInputSettings(), false))
+        {
+            vad.Push(briefBurst); vad.Push(briefBurst);
+            Check(!vad.HasSpeech, "Short bursts inside a callback are measured by actual voiced duration");
+        }
+        var halfVoiced = new byte[3200];
+        for (int i = 0; i < 1600 * 2; i += 2) BinaryPrimitives.WriteInt16LittleEndian(halfVoiced.AsSpan(i, 2), 2500);
+        using (var vad = new SpeechSegmenter(new VoiceInputSettings(), false))
+        {
+            vad.Push(halfVoiced); vad.Push(halfVoiced);
+            Check(vad.HasSpeech, "Sustained speech is retained when callbacks also contain silence");
         }
 
         var mic = new DrivenMicrophone();

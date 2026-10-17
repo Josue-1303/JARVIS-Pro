@@ -18,6 +18,11 @@ static class Checks
             Check(LocalClock.Answer(LocalClock.Parse(q) ?? throw new Exception("Unrecognized: " + q), friday).Text.Contains("viernes"), q);
         foreach (var q in new[] { "What day is today?", "What day of the week is it today?", "And what's the date?", "I said what day is today", "Can you tell me what day is today?" })
             Check(LocalClock.Answer(LocalClock.Parse(q) ?? throw new Exception("Unrecognized: " + q), friday).Text.Contains("Friday"), q);
+        foreach (var q in new[] { "Dime la hora, por favor.", "Dime la hora", "La hora actual, por favor." })
+            Check(LocalClock.Parse(q) is { Kind: "time", Language: "es" }, "Spanish imperative time request: " + q);
+        Check(LocalClock.Answer(LocalClock.Parse("Dime la hora, por favor.")!, friday).Text.StartsWith("Son las 23:59"), "Spanish plural time answer uses natural grammar");
+        var oneAm = new DateTimeOffset(2026, 10, 16, 1, 5, 0, TimeSpan.FromHours(3));
+        Check(LocalClock.Answer(LocalClock.Parse("Dime la hora")!, oneAm).Text.StartsWith("Es la 01:05"), "Spanish singular time answer uses natural grammar");
         foreach (var q in new[] { "¿Qué hora es en Tokio?", "What day is Christmas?", "¿Qué día nací?", "Dime qué día fue el 16 de octubre de 2025", "Translate what day is today into French", "What time is it and explain relativity" })
             Check(LocalClock.Parse(q) == null, "No false clock match: " + q);
         Check(LocalClock.Answer(LocalClock.Parse("What day is tomorrow?")!, friday).Text.Contains("Saturday"), "Tomorrow rollover");
@@ -96,7 +101,7 @@ static class Checks
         Check(reply.Text.Contains("viernes"), "Local clock works when Ollama is unavailable");
         handler.Failure = null;
         reply = await ai.AskReplyAsync("¿Qué diga eso hoy?");
-        Check(reply.Text.StartsWith("¿Querías") && !reply.Text.Contains("viernes"), "Uncertain clock phrase asks before answering");
+        Check(reply.Text.Contains("¿Querías", StringComparison.Ordinal) && !reply.Text.Contains("viernes", StringComparison.OrdinalIgnoreCase), "Uncertain clock phrase asks before answering with formal address");
         reply = await ai.AskReplyAsync("no");
         Check(!reply.Text.Contains("viernes"), "Rejected interpretation does not answer the clock");
         await ai.AskReplyAsync("¿Qué diga eso hoy?");
@@ -138,6 +143,7 @@ static class Checks
                 for (int i = 0; i < 15 && !segmenter.Finished; i++) segmenter.Push(new byte[3200]);
                 string transcript = await voice.TranscribeAsync(segmenter.GetWave()!);
                 Console.WriteLine($"AUDIO [{file}]: {transcript}");
+                Console.WriteLine($"Whisper confidence [{file}]: {voice.LastTranscriptionConfidence:P1}");
                 Check(ReplyLanguage.Detect(transcript) == language, "Acoustic language selection: " + file);
                 var answer = await ai.AskReplyAsync(transcript);
                 if (file == "day-es.wav" && LocalClock.Parse(transcript) == null)

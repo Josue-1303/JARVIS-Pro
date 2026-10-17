@@ -4,5 +4,13 @@
     <Compile Include="../Jarvis.Core/JarvisAI.cs" Link="JarvisAI.cs" />
     <Compile Include="../Jarvis.Core/MemoryStore.cs" Link="MemoryStore.cs" />
   </ItemGroup>
-<ItemGroup><Compile Include="../Jarvis.Core/ReplyLanguage.cs" Link="ReplyLanguage.cs" /><Compile Include="../Jarvis.Core/LocalClock.cs" Link="LocalClock.cs" /></ItemGroup></Project>
+<ItemGroup>
+  <Compile Include="../Jarvis.Core/ReplyLanguage.cs" Link="ReplyLanguage.cs" />
+  <Compile Include="../Jarvis.Core/LocalClock.cs" Link="LocalClock.cs" />
+  <Compile Include="../Jarvis.Core/AssistantRules.cs" Link="AssistantRules.cs" />
+  <Compile Include="../Jarvis.Core/FormalAddress.cs" Link="FormalAddress.cs" />
+  <Compile Include="../Jarvis.Core/UserProfileAnswers.cs" Link="UserProfileAnswers.cs" />
+  <Compile Include="../Jarvis.Core/SpanishFormality.cs" Link="SpanishFormality.cs" />
+</ItemGroup>
+</Project>
 

@@ -44,7 +44,7 @@ namespace Jarvis.Core
                 return;
             }
 
-            Console.WriteLine("J.A.R.V.I.S. PRO V0.7.2 — mantenimiento de respuestas y voz");
+            Console.WriteLine("J.A.R.V.I.S. PRO V0.8 PREVIEW 1 — fiabilidad de voz");
             var voiceSelection = new VoiceSelection();
             int dataArgument = Array.IndexOf(args, "--data-dir");
             if (dataArgument >= 0 && dataArgument + 1 >= args.Length) throw new ArgumentException("Falta la ruta después de --data-dir.");
@@ -57,7 +57,7 @@ namespace Jarvis.Core
             if (Array.Exists(args, arg => arg == "--text-mode")) conversationInput.Pause();
 
             Console.WriteLine("==============================");
-            Console.WriteLine("    J.A.R.V.I.S. PRO V0.7.2   ");
+            Console.WriteLine("    J.A.R.V.I.S. PRO V0.8   ");
             Console.WriteLine("==============================");
 
             Console.WriteLine("Model: Qwen3 8B");
@@ -76,7 +76,7 @@ namespace Jarvis.Core
                 Console.WriteLine($"Conversación: {session.Current.Title}");
                 Console.WriteLine($"[1] Español  [2] English  [A] Automático | Modo: {voiceSelection.Description}");
                 Console.WriteLine("[ESC] Exit");
-                Console.WriteLine("Durante una respuesta: [ESC] o [Ctrl+C] cancela / detiene la voz.");
+                Console.WriteLine("Durante una respuesta: di «Jarvis, detente»; [ESC] o [Ctrl+C] también cancelan.");
                 Console.WriteLine();
 
                 IdleInput idle;
@@ -177,10 +177,16 @@ namespace Jarvis.Core
                         Console.WriteLine("Respuesta guardada. Detener la voz conserva este texto en el historial.");
                         string language = voiceSelection.Resolve(answer);
                         Console.WriteLine($"Voz: {(language == "es" ? "Español" : "English")} ({voiceSelection.Description})");
-                        await voice.SpeakAsync(answer.Text, language, cancellationToken, stage =>
-                            Console.WriteLine(stage == SpeechStage.Synthesizing
-                                ? "Preparando voz... [ESC] para cancelar."
-                                : "Hablando... [ESC] para detener."));
+                        bool interruptedByVoice = await SpokenInterruption.RunAsync(
+                            ct => voice.SpeakAsync(answer.Text, language, ct, stage =>
+                                Console.WriteLine(stage == SpeechStage.Synthesizing
+                                    ? "Preparando voz... Di «Jarvis, detente» o pulsa [ESC]."
+                                    : "Hablando... Di «Jarvis, detente» o pulsa [ESC].")),
+                            voice.ListenForInterruptionAsync,
+                            () => Console.WriteLine("Orden de interrupción reconocida."),
+                            ex => Console.WriteLine("Interrupción por voz no disponible: " + ex.Message),
+                            cancellationToken);
+                        if (interruptedByVoice) Console.WriteLine("Voz detenida. La respuesta sigue guardada en el historial.");
                         conversationInput.ResponseFinished();
                     });
                     // Let the speaker tail settle before opening the microphone again.

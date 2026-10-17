@@ -72,6 +72,32 @@ static class VoiceTests
         foreach (string phrase in new[] { "", "Dime la hora", "Me gusta Jarvis", "Jarvision", "un jarvis al final" })
             Check(!WakePhrase.TryExtract(phrase, out _), "Non-wake phrase ignored: " + phrase);
 
+        Check(SpokenInterruption.IsStopCommand("Jarvis, detente."), "Spanish wake-prefixed stop command recognized");
+        Check(SpokenInterruption.IsStopCommand("Hey Jarvis, stop talking!"), "English wake-prefixed stop command recognized");
+        Check(SpokenInterruption.IsStopCommand("Hola, Carvis, detén la voz."), "Wake alias and accents normalized for stop command");
+        foreach (string phrase in new[] { "detente", "Jarvis, dime la hora", "Jarvis, para cuándo empieza" })
+            Check(!SpokenInterruption.IsStopCommand(phrase), "Non-interruption phrase ignored: " + phrase);
+
+        var interruptionPhrases = new Queue<string>(new[] { "detente", "Jarvis, dime la hora", "Hola Jarvis, detén la respuesta." });
+        int interruptionSignals = 0;
+        bool speechCancelledByVoice = false;
+        bool interruptedByVoice = await SpokenInterruption.RunAsync(async ct =>
+        {
+            try { await Task.Delay(Timeout.Infinite, ct); }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { speechCancelledByVoice = true; throw; }
+        }, _ => Task.FromResult(interruptionPhrases.Dequeue()),
+        () => interruptionSignals++, cancellationToken: CancellationToken.None);
+
+        Check(interruptedByVoice && speechCancelledByVoice && interruptionSignals == 1 && interruptionPhrases.Count == 0,
+            "Explicit spoken command cancels speech once after ignoring non-command audio");
+
+        bool listenerReleasedAfterSpeech = false;
+        bool naturalFinishInterrupted = await SpokenInterruption.RunAsync(_ => Task.CompletedTask, async ct =>
+        {
+            try { await Task.Delay(Timeout.Infinite, ct); return ""; }
+            finally { listenerReleasedAfterSpeech = true; }
+        });
+        Check(!naturalFinishInterrupted && listenerReleasedAfterSpeech, "Speech completion cancels and releases the interruption listener");
         var words = new Queue<string>(new[] { "ruido", "Jarvis, hola" });
         string result = await WakeListener.WaitAsync((forever, ct) => Task.FromResult(words.Dequeue()), CancellationToken.None);
         Check(result == "hola" && words.Count == 0, "No question returned before wake prefix");
@@ -144,6 +170,8 @@ static class VoiceTests
             Check(vad.HasSpeech && vad.Finished, "Fixture ends on silence: " + file);
             string transcript = await voice.TranscribeAsync(vad.GetWave()!);
             Console.WriteLine(file + ": " + transcript);
+            Check(voice.LastTranscriptionConfidence is >= 0 and <= 1, "Whisper confidence is available: " + file);
+            Console.WriteLine($"confidence [{file}]: {voice.LastTranscriptionConfidence:P1}");
             Check(WakePhrase.TryExtract(transcript, out string command) == shouldWake, "Whisper wake decision: " + file);
             if (shouldWake) Check(file == "wake-only-es.wav" ? command.Length == 0 : !string.IsNullOrWhiteSpace(command), "Wake-only or question extracted correctly: " + file);
             if (file == "greeting-es.wav")
