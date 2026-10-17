@@ -1,0 +1,592 @@
+<Window x:Class="Jarvis.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Jarvis.Desktop"
+        Title="J.A.R.V.I.S. Pro" Width="1440" Height="900" MinWidth="1080" MinHeight="680"
+        Background="#080A12" Foreground="#F1F3FB" FontFamily="Segoe UI"
+        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing">
+  <Window.Resources>
+    <Style TargetType="ScrollBar">
+      <Setter Property="Background" Value="#0B0E18"/>
+      <Setter Property="Width" Value="8"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
+        <Grid Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+          <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" IsDirectionReversed="True"
+                 Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+                 Value="{TemplateBinding Value}" ViewportSize="{TemplateBinding ViewportSize}">
+            <Track.Thumb>
+              <Thumb Focusable="False" Background="#443A70" BorderThickness="1">
+                <Thumb.Template><ControlTemplate TargetType="Thumb">
+                  <Border x:Name="ThumbSurface" Background="#443A70" BorderBrush="#6654A0"
+                          BorderThickness="1" CornerRadius="4" Margin="1"/>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ThumbSurface" Property="Background" Value="#705BB0"/><Setter TargetName="ThumbSurface" Property="BorderBrush" Value="#9A81ED"/></Trigger>
+                    <Trigger Property="IsDragging" Value="True"><Setter TargetName="ThumbSurface" Property="Background" Value="#D9B96E"/><Setter TargetName="ThumbSurface" Property="BorderBrush" Value="#F0D88F"/></Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate></Thumb.Template>
+              </Thumb>
+            </Track.Thumb>
+          </Track>
+        </Grid>
+        <ControlTemplate.Triggers>
+          <Trigger Property="Orientation" Value="Horizontal">
+            <Setter Property="Width" Value="Auto"/><Setter Property="Height" Value="8"/>
+            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+          </Trigger>
+          <Trigger Property="Orientation" Value="Vertical"><Setter Property="Width" Value="8"/><Setter Property="Height" Value="Auto"/></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="ActionButton" TargetType="Button">
+      <Setter Property="Foreground" Value="#F1F3FB"/><Setter Property="Background" Value="#1B2132"/>
+      <Setter Property="BorderBrush" Value="#30384F"/><Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="14,10"/><Setter Property="FontSize" Value="14"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+        <Border x:Name="B" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+        <ControlTemplate.Triggers>
+          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="BorderBrush" Value="#8069D5"/><Setter TargetName="B" Property="Background" Value="#24243B"/></Trigger>
+          <Trigger Property="IsEnabled" Value="False"><Setter TargetName="B" Property="Opacity" Value="0.45"/></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="InputBox" TargetType="TextBox">
+      <Setter Property="Foreground" Value="#F1F3FB"/><Setter Property="Background" Value="#111522"/>
+      <Setter Property="BorderBrush" Value="#30384F"/><Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="14,12"/><Setter Property="FontSize" Value="15"/>
+      <Setter Property="CaretBrush" Value="#78AEFF"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="HistoryActionButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+      <Setter Property="Width" Value="25"/><Setter Property="Height" Value="25"/><Setter Property="Padding" Value="0"/>
+      <Setter Property="FontSize" Value="13"/><Setter Property="Visibility" Value="Collapsed"/>
+      <Setter Property="Background" Value="#20243A"/><Setter Property="BorderBrush" Value="#414866"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+          <Setter Property="Visibility" Value="Visible"/>
+        </DataTrigger>
+        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+          <Setter Property="Visibility" Value="Visible"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="LanguageSelectorStyle" TargetType="ComboBox">
+      <Setter Property="Foreground" Value="#D7C9FF"/>
+      <Setter Property="Background" Value="#171326"/>
+      <Setter Property="BorderBrush" Value="#604A94"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="12,7"/>
+      <Setter Property="ItemContainerStyle">
+        <Setter.Value>
+          <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#D7C9FF"/>
+            <Setter Property="Background" Value="#151220"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                  <Border x:Name="ItemSurface" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                    <ContentPresenter/>
+                  </Border>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsHighlighted" Value="True">
+                      <Setter TargetName="ItemSurface" Property="Background" Value="#30254B"/>
+                      <Setter Property="Foreground" Value="#E5D6FF"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                      <Setter TargetName="ItemSurface" Property="Background" Value="#24203A"/>
+                      <Setter Property="Foreground" Value="#E0C77C"/>
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <ToggleButton x:Name="DropDownToggle" Focusable="False" ClickMode="Press"
+                            IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="SelectorSurface" Background="#171326" BorderBrush="#604A94"
+                            BorderThickness="1" CornerRadius="9">
+                      <Grid Margin="11,0,10,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/></Grid.ColumnDefinitions>
+                        <ContentPresenter Grid.Column="0" VerticalAlignment="Center" Margin="0,0,6,0"
+                                          Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}"
+                                          TextElement.Foreground="#D7C9FF"/>
+                        <Path Grid.Column="1" Data="M 1 1 L 5 5 L 9 1" Stroke="#B79EFF"
+                              StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="SelectorSurface" Property="BorderBrush" Value="#8870CB"/>
+                        <Setter TargetName="SelectorSurface" Property="Background" Value="#201A35"/>
+                      </Trigger>
+                      <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="SelectorSurface" Property="Background" Value="#28203F"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False"
+                     IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" PopupAnimation="Fade">
+                <Border Background="#151220" BorderBrush="#604A94" BorderThickness="1"
+                        CornerRadius="9" Margin="0,5,0,0" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                  <ScrollViewer MaxHeight="{TemplateBinding MaxDropDownHeight}" VerticalScrollBarVisibility="Auto">
+                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                  </ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="HistoryListStyle" TargetType="ListBox">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBox">
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+              <ScrollViewer Background="#10131E" Focusable="False" Padding="0"
+                            HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+              </ScrollViewer>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <DataTemplate x:Key="MessageTemplate">
+      <StackPanel x:Name="MessageContent" HorizontalAlignment="Left" MaxWidth="760" Margin="4,12,40,12">
+        <TextBlock x:Name="SpeakerLabel" Text="{Binding Speaker}" Foreground="#D9B96E"
+                   FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"/>
+        <TextBlock x:Name="MessageText" Text="{Binding DisplayText}" Foreground="#E2E5F0"
+                   TextWrapping="Wrap" FontSize="16" LineHeight="25"/>
+        <ItemsControl ItemsSource="{Binding SourceLinks}" Margin="0,8,0,0">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate><DataTemplate>
+            <Button Content="{Binding Label}" Tag="{Binding Url}" Click="SourceLink_Click"
+                    Background="Transparent" BorderThickness="0" Padding="0,2" Margin="0,0,14,3"
+                    Foreground="#78AEFF" FontSize="10" Cursor="Hand"/>
+          </DataTemplate></ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding IsUser}" Value="True">
+          <Setter TargetName="MessageContent" Property="HorizontalAlignment" Value="Right"/>
+          <Setter TargetName="MessageContent" Property="Margin" Value="40,12,4,12"/>
+          <Setter TargetName="SpeakerLabel" Property="Foreground" Value="#B9A2FF"/>
+          <Setter TargetName="MessageText" Property="Foreground" Value="#D9DDF0"/>
+          <Setter TargetName="MessageText" Property="TextAlignment" Value="Right"/>
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+  </Window.Resources>
+  <Grid Margin="18">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Border Grid.Column="0" Background="#10131E" BorderBrush="#1D2231" BorderThickness="1" CornerRadius="18" Padding="16">
+      <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel Margin="2,8,2,22">
+          <TextBlock Text="J.A.R.V.I.S." FontSize="22" FontWeight="SemiBold" Foreground="#E7E4FF"/>
+          <TextBlock x:Name="BrandCaptionText" Text="PRO  ·  ASISTENTE LOCAL" FontSize="9" Foreground="#9298AE" Margin="1,6,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1">
+          <Button Style="{StaticResource ActionButton}" Click="NewConversation_Click"
+                  x:Name="NewConversationButton" Background="#25203D" BorderBrush="#6247A1" Margin="0,0,0,8" Content="＋  Nueva conversación"/>
+          <Button x:Name="MemoriesButton" Style="{StaticResource ActionButton}" Click="Memories_Click"
+                  Background="#171C2B" BorderBrush="#394568" Margin="0,0,0,18" Content="◇  Recuerdos"/>
+          <Button x:Name="RulesButton" Style="{StaticResource ActionButton}" Click="Rules_Click"
+                  Background="#171C2B" BorderBrush="#394568" Margin="0,0,0,18" Content="◈  Rules"/>
+          <Button x:Name="PersonalityButton" Style="{StaticResource ActionButton}" Click="Personality_Click"
+                  Background="#12211D" BorderBrush="#377C64" Margin="0,0,0,18" Content="◉  Personality"/>
+        </StackPanel>
+        <TextBlock x:Name="ConversationsLabel" Grid.Row="2" Text="CONVERSACIONES" FontSize="10" FontWeight="SemiBold"
+                   Foreground="#858CA4" Margin="5,0,0,8"/>
+        <ListBox x:Name="HistoryList" Grid.Row="3" Style="{StaticResource HistoryListStyle}" SelectionChanged="HistoryList_SelectionChanged"
+                 Background="Transparent" BorderThickness="0" Foreground="#C6C9D6">
+          <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding Title}" TextWrapping="Wrap" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+              <Button Grid.Column="1" Style="{StaticResource HistoryActionButton}" Content="✎" ToolTip="{Binding RenameLabel}"
+                      Tag="{Binding}" Click="RenameConversation_Click" Margin="2,0" AutomationProperties.Name="{Binding RenameLabel}"/>
+              <Button Grid.Column="2" Style="{StaticResource HistoryActionButton}" Content="×" ToolTip="{Binding DeleteLabel}"
+                      Tag="{Binding}" Click="DeleteConversation_Click" Margin="2,0,0,0" AutomationProperties.Name="{Binding DeleteLabel}"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+        <ListBox.ItemContainerStyle>
+            <Style TargetType="ListBoxItem">
+              <Setter Property="Padding" Value="10,9"/><Setter Property="Margin" Value="0,2"/>
+              <Setter Property="Foreground" Value="#BFC4D4"/><Setter Property="Background" Value="Transparent"/>
+              <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                <Border x:Name="B" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                  <ContentPresenter/>
+                </Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsSelected" Value="True"><Setter TargetName="B" Property="Background" Value="#20223A"/><Setter Property="Foreground" Value="#E8E2FF"/></Trigger>
+                  <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#191D2C"/></Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate></Setter.Value></Setter>
+            </Style>
+          </ListBox.ItemContainerStyle>
+        </ListBox>
+        <Border Grid.Row="4" Background="#141927" BorderBrush="#242C41" BorderThickness="1" CornerRadius="10" Padding="11" Margin="0,14,0,0">
+          <StackPanel>
+            <DockPanel LastChildFill="False" Margin="0,0,0,11">
+              <TextBlock x:Name="InternetAccessLabel" Text="ACCESO A INTERNET" FontSize="9" FontWeight="SemiBold"
+                         Foreground="#D9B96E" VerticalAlignment="Center"/>
+              <ToggleButton x:Name="InternetAccessToggle" DockPanel.Dock="Right" Width="48" Height="24"
+                            IsChecked="False" Checked="InternetAccessToggle_Changed" Unchecked="InternetAccessToggle_Changed"
+                            Background="#171326" BorderBrush="#604A94" BorderThickness="1" Cursor="Hand"
+                            ToolTip="Permite que J.A.R.V.I.S. consulte servicios en Internet."
+                            AutomationProperties.Name="Acceso a Internet">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="SwitchTrack" Background="#211B2E" BorderBrush="#604A94" BorderThickness="1" CornerRadius="12">
+                      <Grid>
+                        <Ellipse x:Name="SwitchKnob" Width="16" Height="16" Fill="#A78BFA" HorizontalAlignment="Left" Margin="3,0,0,0"/>
+                      </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="SwitchTrack" Property="Background" Value="#102B35"/>
+                        <Setter TargetName="SwitchTrack" Property="BorderBrush" Value="#3CC9C2"/>
+                        <Setter TargetName="SwitchKnob" Property="HorizontalAlignment" Value="Right"/>
+                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#59D6CE"/>
+                        <Setter TargetName="SwitchKnob" Property="Margin" Value="0,0,3,0"/>
+                      </Trigger>
+                      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="SwitchTrack" Property="BorderBrush" Value="#D9B96E"/></Trigger>
+                      <Trigger Property="IsEnabled" Value="False"><Setter TargetName="SwitchTrack" Property="Opacity" Value="0.5"/></Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <TextBlock x:Name="InternetAccessStateText" Text="OFF" DockPanel.Dock="Right" Foreground="#858FA9"
+                         FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            </DockPanel>
+            <DockPanel LastChildFill="False" Margin="0,0,0,10">
+              <TextBlock x:Name="WebSearchKeyStatusText" Text="WEB SEARCH · NOT SET" FontSize="8" FontWeight="SemiBold"
+                         Foreground="#858FA9" VerticalAlignment="Center"/>
+              <Button x:Name="ConfigureWebSearchButton" DockPanel.Dock="Right" Style="{StaticResource ActionButton}"
+                      Content="Configure" Click="ConfigureWebSearch_Click" Padding="8,5" FontSize="10"
+                      Background="#171326" BorderBrush="#604A94"/>
+            </DockPanel>
+            <DockPanel LastChildFill="False" Margin="0,0,0,10">
+              <TextBlock x:Name="InterfaceLanguageLabel" Text="IDIOMA DE INTERFAZ" FontSize="9" FontWeight="SemiBold"
+                         Foreground="#B79EFF" VerticalAlignment="Center"/>
+              <ComboBox x:Name="InterfaceLanguageSelector" Style="{StaticResource LanguageSelectorStyle}" Width="104" Height="30"
+                        SelectedIndex="0" SelectionChanged="InterfaceLanguageSelector_SelectionChanged" Margin="8,0,0,0">
+                <ComboBoxItem Content="Español" Tag="es"/><ComboBoxItem Content="English" Tag="en"/>
+              </ComboBox>
+            </DockPanel>
+            <TextBlock x:Name="LocalExecutionTitle" Text="EJECUCIÓN LOCAL" FontSize="10" FontWeight="SemiBold" Foreground="#D8BC79"/>
+            <TextBlock x:Name="LocalExecutionDetails" Text="Voz y memoria en este equipo" Foreground="#A3A9BA" FontSize="11" Margin="0,5,0,0"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+    <Grid Grid.Column="2">
+      <Grid.RowDefinitions><RowDefinition Height="102"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <Grid Grid.Row="0" Margin="0,0,0,4">
+        <Grid.RowDefinitions><RowDefinition Height="44"/><RowDefinition Height="50"/></Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#438CFF" Margin="0,0,9,0"/>
+            <TextBlock x:Name="StatusText" Text="J.A.R.V.I.S. está listo" Foreground="#C7CBD8" VerticalAlignment="Center" FontSize="13"/>
+          </StackPanel>
+          <ComboBox x:Name="LanguageSelector" Style="{StaticResource LanguageSelectorStyle}" Grid.Column="1" Width="148" Height="36" SelectedIndex="0"
+                    SelectionChanged="LanguageSelector_SelectionChanged"
+                    Margin="0,0,10,0" VerticalContentAlignment="Center">
+            <ComboBoxItem x:Name="VoiceLanguageAutomatic" Content="Automático" Tag=""/><ComboBoxItem x:Name="VoiceLanguageSpanish" Content="Español" Tag="es"/><ComboBoxItem x:Name="VoiceLanguageEnglish" Content="English" Tag="en"/>
+          </ComboBox>
+          <Button x:Name="StopButton" Grid.Column="2" Style="{StaticResource ActionButton}" Content="■  Detener"
+                  Background="#351A24" BorderBrush="#763343" Click="Stop_Click" IsEnabled="False" Padding="12,8"/>
+        </Grid>
+        <Grid Grid.Row="1" Margin="0,0,0,1">
+          <local:HudParticleView x:Name="HeaderHud"/>
+          <Grid Margin="5,0,7,0" IsHitTestVisible="False">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock x:Name="LocalCoreLabel" Text="LOCAL NEURAL CORE" Foreground="#D1C4F4" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <TextBlock Text="  /  " Foreground="#65538E" FontSize="8" VerticalAlignment="Center"/>
+              <TextBlock Text="QWEN3 · 8B" Foreground="#E0C77C" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Ellipse Width="4" Height="4" Fill="#4A8CFF" Margin="8,0,5,0"/>
+              <TextBlock x:Name="LocalProcessingLabel" Text="PROCESAMIENTO LOCAL" Foreground="#929BB4" FontSize="7" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+              <Ellipse Width="5" Height="5" Fill="#D9A441" Margin="0,0,6,0"/>
+              <TextBlock x:Name="SystemActiveLabel" Text="SISTEMA ACTIVO" Foreground="#BBC2D6" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid Grid.Row="1" Margin="0,2,0,12" ClipToBounds="True">
+        <local:StageHudView x:Name="StageHud" Opacity="0.9"/>
+        <Grid x:Name="ChatNuclei" Width="470" Height="470" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+          <local:ParticleCoreView x:Name="ParticleCore" Width="386" Height="386" Opacity="0.78"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <local:MemoryBrainView x:Name="ChatMemoryCore" Width="426" Height="426" Opacity="0.9"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <local:ParticleCoreView x:Name="ChatRulesCore" Width="414" Height="414" Opacity="0.78" AccentColor="#E77E3D"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <local:PersonalityCoreView x:Name="ChatPersonalityCore" Width="448" Height="448" Opacity="0.86"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+        <Grid x:Name="EnvironmentHud" IsHitTestVisible="True">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="386"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,38,8,0"
+                      IsHitTestVisible="False" ToolTip="Hora local del dispositivo">
+            <TextBlock x:Name="ClockTitleText" Text="LOCAL TIME" Foreground="#78AEFF" FontSize="8" FontWeight="SemiBold"/>
+            <TextBlock x:Name="ClockText" Text="--:--" Foreground="#E0C77C" FontSize="27" FontWeight="Light" Margin="0,2,0,0"/>
+            <TextBlock x:Name="DateText" Text="---, -- ---" Foreground="#B8C5E2" FontSize="10" Margin="1,0,0,0"/>
+            <Border Height="1" Width="112" HorizontalAlignment="Left" Background="#47619B" Opacity="0.65" Margin="1,9,0,0"/>
+            <TextBlock x:Name="ClockFooterText" Text="LOCAL CLOCK" Foreground="#727F9C" FontSize="7" Margin="1,5,0,0"/>
+          </StackPanel>
+          <Button x:Name="LocationButton" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                  Width="156" Margin="9,0,4,120" Padding="5,8" Background="Transparent" BorderThickness="0"
+                  Cursor="Hand" Click="LocationButton_Click" ToolTip="La ubicación se solicita solo cuando pulsas aquí. J.A.R.V.I.S. no la guarda.">
+            <Button.Template><ControlTemplate TargetType="Button">
+              <Border x:Name="LocationSurface" Background="Transparent" BorderBrush="#536B9A" BorderThickness="0"
+                      Padding="{TemplateBinding Padding}" CornerRadius="5">
+                <ContentPresenter/>
+              </Border>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="LocationSurface" Property="Background" Value="#101827"/><Setter TargetName="LocationSurface" Property="BorderThickness" Value="0,0,0,1"/></Trigger>
+                <Trigger Property="IsEnabled" Value="False"><Setter TargetName="LocationSurface" Property="Opacity" Value="0.55"/></Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate></Button.Template>
+            <StackPanel>
+              <TextBlock x:Name="LocationTitleText" Text="DEVICE POSITION" Foreground="#D9B96E" FontSize="8" FontWeight="SemiBold"/>
+              <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                <TextBlock Text="⌖" Foreground="#EA5262" FontSize="18" Margin="0,-2,6,0"/>
+                <TextBlock x:Name="LocationText" Text="Activar ubicación" Foreground="#D6DDF0" FontSize="11"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="124"/>
+              </StackPanel>
+              <TextBlock x:Name="LocationStatusText" Text="Solo con tu permiso" Foreground="#858FA9" FontSize="8" Margin="1,3,0,0"/>
+            </StackPanel>
+          </Button>
+          <StackPanel x:Name="WeatherPanel" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8,39,12,0"
+                      Width="156" ToolTip="Pronóstico gratuito de Open-Meteo. Para consultar el clima se envían las coordenadas a su servicio.">
+            <TextBlock x:Name="WeatherTitleText" Text="LOCAL WEATHER" Foreground="#B79EFF" FontSize="8" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Margin="-2,1,0,0">
+              <TextBlock x:Name="WeatherGlyph" Text="◌" Foreground="#80B9FF" FontSize="26" VerticalAlignment="Center" Margin="0,0,6,0"/>
+              <TextBlock x:Name="WeatherTemperatureText" Text="--°" Foreground="#E5E8F3" FontSize="26" FontWeight="Light" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock x:Name="WeatherConditionText" Text="Ubicación desactivada" Foreground="#B8C5E2" FontSize="10"
+                       TextTrimming="CharacterEllipsis" Margin="0,0,0,3"/>
+            <TextBlock x:Name="WeatherRangeText" Text="↑ --°   ↓ --°" Foreground="#E0C77C" FontSize="9"/>
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+              <Border Height="2" Width="32" Background="#EA5262" Margin="0,0,3,0"/>
+              <Border Height="2" Width="24" Background="#B79EFF" Margin="0,0,3,0"/>
+              <Border Height="2" Width="42" Background="#4A8CFF"/>
+            </StackPanel>
+            <TextBlock x:Name="WeatherPrecipitationText" Text="Prob. precipitación --%" Foreground="#929BB4" FontSize="8" Margin="0,5,0,0"/>
+            <TextBlock x:Name="WeatherSourceText" Text="OPEN-METEO · --:--" Foreground="#727F9C" FontSize="7" Margin="0,6,0,0"/>
+          </StackPanel>
+          <Border x:Name="NewsPanel" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Top" Width="174" Height="220"
+                  Margin="0,230,5,0" Background="#D90D111C" BorderBrush="#3B3458" BorderThickness="1"
+                  CornerRadius="8" Padding="10">
+            <StackPanel>
+              <DockPanel Margin="0,0,0,8">
+                <TextBlock x:Name="NewsTitleText" Text="LATEST NEWS" Foreground="#E0C77C" FontSize="8" FontWeight="SemiBold"/>
+                <TextBlock x:Name="NewsSourceText" Text="YLE · RSS" Foreground="#727F9C" FontSize="7" DockPanel.Dock="Right"/>
+              </DockPanel>
+              <TextBlock x:Name="NewsStatusText" Text="Loading news…" Foreground="#858FA9" FontSize="8"
+                         TextWrapping="Wrap" Margin="0,0,0,4"/>
+              <ScrollViewer Height="170" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="NewsList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Click="NewsArticle_Click" Tag="{Binding Url}" Padding="0,3" Margin="0,1"
+                              Background="Transparent" BorderThickness="0" Cursor="Hand" HorizontalContentAlignment="Left">
+                        <StackPanel>
+                          <TextBlock Text="{Binding Title}" Foreground="#CBD5EE" FontSize="9" TextWrapping="Wrap"
+                                     MaxHeight="35" TextTrimming="CharacterEllipsis"/>
+                          <TextBlock Text="{Binding PublishedLabel}" Foreground="#8278AD" FontSize="7" Margin="0,2,0,0"/>
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </StackPanel>
+          </Border>
+        </Grid>
+        <ScrollViewer x:Name="MessagesScroll" Background="Transparent" Height="260" VerticalAlignment="Bottom"
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      CanContentScroll="False" Padding="12,10" Margin="0,0,0,8">
+          <ItemsControl x:Name="MessageList" ItemTemplate="{StaticResource MessageTemplate}"/>
+        </ScrollViewer>
+        <Grid x:Name="MemoryModePanel" Visibility="Collapsed" Background="Transparent" Margin="0,2,0,8">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <StackPanel HorizontalAlignment="Center" Margin="0,4,0,8">
+            <TextBlock x:Name="MemoryModeTitle" Text="MEMORIA PERSISTENTE" Foreground="#D9B96E" FontSize="11" FontWeight="SemiBold" TextAlignment="Center" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="MemoryModeHint" Text="Selecciona un recuerdo para editarlo, o escribe uno abajo para guardarlo." Foreground="#9BA7C5" FontSize="12" Margin="0,5,0,0" TextAlignment="Center"/>
+          </StackPanel>
+          <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+            <local:MemoryBrainView x:Name="MemoryBrain" Grid.Column="0" Width="470" Height="480" Opacity="0.96" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"/>
+            <Border Grid.Column="1" VerticalAlignment="Stretch" Margin="8,148,8,8"
+                    Background="#0D111BCC" BorderBrush="#34304E" BorderThickness="1" CornerRadius="12" Padding="14">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,10">
+                  <TextBlock x:Name="MemoryListTitle" Text="RECUERDOS" Foreground="#B79EFF" FontSize="10" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="MemoryCountText" Text="0 / 20" Foreground="#737F9B" FontSize="9" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+                </DockPanel>
+                <ListBox x:Name="SavedMemoryList" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                         Foreground="#D8DCEF" SelectionChanged="SavedMemoryList_SelectionChanged"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                  <ListBox.ItemTemplate><DataTemplate>
+                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"/>
+                  </DataTemplate></ListBox.ItemTemplate>
+                  <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem">
+                    <Setter Property="Padding" Value="10,9"/><Setter Property="Margin" Value="0,2"/>
+                    <Setter Property="Background" Value="#141927"/><Setter Property="Foreground" Value="#C8CDE0"/>
+                    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                      <Border x:Name="MemoryItemSurface" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True"><Setter TargetName="MemoryItemSurface" Property="Background" Value="#211B35"/><Setter TargetName="MemoryItemSurface" Property="BorderBrush" Value="#7059AA"/><Setter Property="Foreground" Value="#E0D6FF"/></Trigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="MemoryItemSurface" Property="BorderBrush" Value="#4D5B82"/></Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate></Setter.Value></Setter>
+                  </Style></ListBox.ItemContainerStyle>
+                </ListBox>
+                <TextBlock x:Name="MemoryEmptyText" Grid.Row="1" Text="Aún no hay recuerdos guardados." Foreground="#727F9C" FontSize="11" TextWrapping="Wrap" Margin="10,12,10,0" IsHitTestVisible="False"/>
+                <TextBlock x:Name="MemoryEditorHint" Grid.Row="2" Text="Escriba un recuerdo en el cuadro inferior y pulse Guardar." Foreground="#747E98" FontSize="9" TextWrapping="Wrap" Margin="2,10,2,0"/>
+              </Grid>
+            </Border>
+          </Grid>
+        </Grid>
+        <Grid x:Name="RulesModePanel" Visibility="Collapsed" Background="Transparent" Margin="0,2,0,8">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="250"/></Grid.RowDefinitions>
+          <StackPanel HorizontalAlignment="Center" Margin="0,4,0,8">
+            <TextBlock x:Name="RulesModeTitle" Text="CORE RULES" Foreground="#D9B96E" FontSize="11" FontWeight="SemiBold" TextAlignment="Center" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="RulesModeHint" Text="Fixed safety principles for every J.A.R.V.I.S. response." Foreground="#9BA7C5" FontSize="12" Margin="0,5,0,0" TextAlignment="Center"/>
+          </StackPanel>
+          <Grid Grid.Row="1" Margin="0,0,0,8" ClipToBounds="True">
+            <local:ParticleCoreView x:Name="RulesBrain" Width="470" Height="460" Opacity="0.88" AccentColor="#E77E3D"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
+          <Border Grid.Row="2" Background="#0D111BCC" BorderBrush="#34304E" BorderThickness="1" CornerRadius="12" Padding="12,10" Margin="8,0,8,4">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+              <DockPanel Margin="0,0,0,6">
+                <TextBlock x:Name="RulesListTitle" Text="NON-NEGOTIABLE PRINCIPLES" Foreground="#B79EFF" FontSize="9" FontWeight="SemiBold"/>
+                <TextBlock x:Name="RulesCountText" Text="8" Foreground="#737F9B" FontSize="9" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+              </DockPanel>
+              <ListBox Grid.Row="1" x:Name="RulesList" SelectionChanged="RulesList_SelectionChanged"
+                       Background="Transparent" BorderThickness="0" Foreground="#C8CDE0"
+                       HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                       ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                       PreviewMouseWheel="RulesList_PreviewMouseWheel">
+                <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                <ListBox.ItemTemplate><DataTemplate>
+                  <Border Background="#141927" BorderBrush="#292E43" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,8,0" Height="174">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                      <DockPanel LastChildFill="True">
+                        <TextBlock Text="{Binding SourceLabel}" Foreground="{Binding SourceColor}" FontSize="8" FontWeight="SemiBold" DockPanel.Dock="Right" Margin="6,1,0,0"/>
+                        <TextBlock Text="{Binding Title}" Foreground="#D8C6FF" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                      </DockPanel>
+                      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,7,0,3">
+                        <TextBlock Text="{Binding Description}" Foreground="#B9C2D8" FontSize="10" TextWrapping="Wrap"/>
+                      </ScrollViewer>
+                      <TextBlock Grid.Row="2" Text="◈ J.A.R.V.I.S." Foreground="#747E98" FontSize="8"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate></ListBox.ItemTemplate>
+                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem">
+                  <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
+                  <Setter Property="Width" Value="242"/><Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="RuleItemSurface" Background="Transparent" CornerRadius="8"><ContentPresenter/></Border>
+                    <ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="RuleItemSurface" Property="Background" Value="#211B35"/></Trigger></ControlTemplate.Triggers>
+                  </ControlTemplate></Setter.Value></Setter>
+                </Style></ListBox.ItemContainerStyle>
+              </ListBox>
+              <TextBlock x:Name="RulesFooterText" Grid.Row="2" Text="Core guidance; model outputs are not technically infallible." Foreground="#747E98" FontSize="9" TextWrapping="Wrap" Margin="2,5,2,0"/>
+            </Grid>
+          </Border>
+        </Grid>
+        <Grid x:Name="PersonalityModePanel" Visibility="Collapsed" Background="Transparent" Margin="0,2,0,8">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <StackPanel HorizontalAlignment="Center" Margin="0,4,0,8">
+            <TextBlock x:Name="PersonalityModeTitle" Text="PERSONALIDAD DE J.A.R.V.I.S." Foreground="#6BE0AE" FontSize="11" FontWeight="SemiBold" TextAlignment="Center" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="PersonalityModeHint" Text="Ajuste el estilo, el humor y la iniciativa del asistente." Foreground="#9BA7C5" FontSize="12" Margin="0,5,0,0" TextAlignment="Center"/>
+          </StackPanel>
+          <Grid Grid.Row="1" Margin="0,0,0,8" ClipToBounds="True">
+            <local:PersonalityCoreView x:Name="PersonalityCore" Width="520" Height="520" Opacity="0.95"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Width="330" MaxHeight="420" Margin="0,0,18,0"
+                    Background="#E90D1918" BorderBrush="#397C61" BorderThickness="1" CornerRadius="12" Padding="16">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <TextBlock x:Name="PersonalityCurrentTitle" Text="PERSONALIDAD ACTUAL" Foreground="#78E1B2"
+                           FontSize="10" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                <ScrollViewer Grid.Row="1" MaxHeight="365" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                  <TextBlock x:Name="PersonalityCurrentText" TextWrapping="Wrap" Foreground="#D5E6DF" FontSize="12" LineHeight="19"/>
+                </ScrollViewer>
+              </Grid>
+            </Border>
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid x:Name="ComposerPanel" Grid.Row="2">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid x:Name="ChatComposerControls">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBox x:Name="MessageInput" Style="{StaticResource InputBox}" Height="54" AcceptsReturn="True"
+                   TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" PreviewKeyDown="MessageInput_KeyDown"/>
+          <Button x:Name="MicrophoneButton" Grid.Column="1" Style="{StaticResource ActionButton}" Content="🎙  Hablar" Margin="9,0,0,0" Click="Microphone_Click"/><Button x:Name="DeleteMemoryButton" Grid.Column="1" Style="{StaticResource ActionButton}" Content="Borrar" Background="#351A24" BorderBrush="#763343" Margin="9,0,0,0" Click="DeleteMemory_Click" Visibility="Collapsed" IsEnabled="False"/>
+          <Button x:Name="SendButton" Grid.Column="2" Style="{StaticResource ActionButton}" Content="Enviar  ➤" Background="#292143"
+                  BorderBrush="#604C9D" Margin="9,0,0,0" Click="Send_Click"/>
+        </Grid>
+        <Grid x:Name="RulesComposerControls" Grid.Row="0" Visibility="Collapsed">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBox x:Name="RuleInput" Style="{StaticResource InputBox}" Height="54" AcceptsReturn="True"
+                   TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" PreviewKeyDown="RuleInput_KeyDown"/>
+          <Button x:Name="AddRuleButton" Grid.Column="1" Style="{StaticResource ActionButton}" Content="＋ Add rule" Click="AddUserRule_Click"
+                  Background="#25203D" BorderBrush="#6247A1" Padding="12,9" Margin="9,0,0,0"/>
+          <Button x:Name="DeleteRuleButton" Grid.Column="2" Style="{StaticResource ActionButton}" Content="Delete my rule" Click="DeleteUserRule_Click"
+                  Background="#351A24" BorderBrush="#763343" Padding="12,9" Margin="8,0,0,0" IsEnabled="False"/>
+        </Grid>
+        <Grid x:Name="PersonalityComposerControls" Grid.Row="0" Visibility="Collapsed">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBox x:Name="PersonalityInput" Style="{StaticResource InputBox}" Height="76" MinHeight="60" MaxHeight="110"
+                   AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto"
+                   PreviewKeyDown="PersonalityInput_KeyDown"/>
+          <Button x:Name="SavePersonalityButton" Grid.Column="1" Style="{StaticResource ActionButton}" Content="Save personality" Click="SavePersonality_Click"
+                  Background="#123126" BorderBrush="#368A69" Padding="14,10" Margin="9,0,0,0"/>
+          <Button x:Name="ResetPersonalityButton" Grid.Column="2" Style="{StaticResource ActionButton}" Content="Restore default" Click="ResetPersonality_Click"
+                  Background="#18241F" BorderBrush="#315D4C" Padding="14,10" Margin="8,0,0,0"/>
+        </Grid>
+        <DockPanel x:Name="FooterControls" Grid.Row="1" Margin="3,8,3,0">
+          <CheckBox x:Name="SpeakCheckBox" Content="Leer respuestas en voz alta" IsChecked="True"
+                    Foreground="#B8BDCE" FontSize="11" VerticalAlignment="Center"/>
+          <TextBlock x:Name="ShortcutText" Text="Intro envía · Mayús+Intro añade una línea" Foreground="#83899C" FontSize="10"
+                     HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+        </DockPanel>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Jarvis.Core/Jarvis.Core.csproj" />
+    <None Include="../Jarvis.Core/piper-settings.json" Link="piper-settings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Jarvis.Core/voice-input-settings.json" Link="voice-input-settings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

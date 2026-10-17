@@ -1,15 +1,16 @@
+# Local conversations, memories, preferences, and encrypted service credentials
+/data/
+/backups/
+/validation/
+
+# Downloaded voice and language-model assets
+/.venv-piper/
+/models/
+/voices/
+
+# Build and IDE output
 **/bin/
 **/obj/
-.vs/
-.venv-piper/
-data/
-models/
-voices/
-backups/
-validation/
-.env
-.env.*
+/.vs/
 *.user
 *.suo
-*.log
-*.wav
